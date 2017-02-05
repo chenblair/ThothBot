@@ -50,9 +50,8 @@
     return;
             } else if (event.message.toLowerCase()=="dump") {
                 //context.sendResponse(context.simpledb.roomleveldata.state.toString())
-                context.simpledb.doGet("1486285863894");
+                context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
                 //context.sendResponse(authCode + username);
-                //context.simplehttp.makeGet('http://thothbot.000webhostapp.com/get.php?code='+authCode+'&username='+username);
             }
 
        }
@@ -69,11 +68,12 @@
             //var contextobj = event.dbval;
             //var param = "context="+contextobj+"&message="+message;
             //context.simplehttp.makePost(url,param,header);
-            context.sendResponse(event.dbval.toString());
+            //context.sendResponse(event.dbval.toString());
             var userObj = JSON.parse(event.dbval);
             username = userObj.username;
             authCode = userObj.code;
-            context.sendResponse(authCode + username);
+            //context.sendResponse(authCode + username);
+            context.simplehttp.makeGet('http://thothbot.000webhostapp.com/get.php?code='+authCode+'&username='+username);
         }
 
         function DbPutHandler(context, event) {
@@ -82,7 +82,7 @@
 
         function HttpResponseHandler(context,event){
             var json = JSON.parse(event.getresp);
-           context.sendResponse(json.toString());
+           context.sendResponse(event.getresp);
         }
         
         function isNewUser(context) {
