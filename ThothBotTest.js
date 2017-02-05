@@ -22,10 +22,7 @@ function MessageHandler(context, event) {
     }
     context.sendResponse(JSON.stringify(button));
   }
-  if (isNewUser(context) || event.message == "Main Menu") {
-
-    context.simpledb.roomleveldata.isnewuser = true;
-
+  if (event.message == "Main Menu") {
     var survey = {
       "type": "survey",
       "question": "Want to study?",
@@ -34,9 +31,27 @@ function MessageHandler(context, event) {
     }
     context.sendResponse(JSON.stringify(survey));
     return;
-  } else if (event.message.toLowerCase() == "kill") {
+  } else if (event.message.toLowerCase() == "resetbot") {
     context.simpledb.roomleveldata.isnewuser = false;
-    context.sendResponse("hi");
+    context.sendResponse("User data reset. Chat anything to continue");
+  } else if (event.message.toLowerCase() == "quitlearning") {
+    if (context.simpledb.roomleveldata.currentLearn > -1) {
+      quitLearnMode(context, event);
+    } else {
+      context.sendResponse("You're not learning right now!")
+    }
+  } else if (event.messageobj.refmsgid == 'persistent-menu') {
+    if (context.simpledb.roomleveldata.currentLearn > -1) {
+      if (event.message.toLowerCase() == "learn") {
+        context.sendResponse("Learn");
+      } else if (event.message.toLowerCase() == 'flash quiz') {
+        context.sendResponse("Quiz");
+      }
+    } else if (event.message.toLowerCase() == 'quit learning') {
+      quitLearnMode(context, event);
+    } else {
+      context.sendResponse("You're already learning!");
+    }
   } else if (context.simpledb.roomleveldata.currentLearn > -1) {
     if (event.message.toLowerCase() != context.simpledb.roomleveldata.correctAnswer) {
       message = "\u2717\nAnswer was: " + context.simpledb.roomleveldata
