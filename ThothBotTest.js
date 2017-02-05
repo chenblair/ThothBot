@@ -7,10 +7,10 @@
              }
        }
         function HttpEndpointHandler(context,event){
-            var dbkey= event.params.key
+            var dbkey = event.params.key
             message = event.params.message;
+            context.simpledb.doPut(dbkey+"message", "{\"message\":\""+message+"\"}");
             context.simpledb.doGet(dbkey);
-
         }
 
         function DbGetHandler(context, event) {
@@ -18,7 +18,7 @@
             var header = {"apikey":"3da26936384d4476c40c6eac52573b96","Content-Type": "application/x-www-form-urlencoded"};
             var contextobj = event.dbval;
             var param = "context="+contextobj+"&message="+message;
-             context.simplehttp.makePost(url,param,header);
+            context.simplehttp.makePost(url,param,header);
         }
 
         function DbPutHandler(context, event) {
