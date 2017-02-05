@@ -12,7 +12,7 @@
                     "options": [{
                     "type": "url",
                     "title": "Authorize",
-                    "url": "quizlet.com/authorize?response_type=code&client_id=4Hxdpv7gBE&scope=write_set&state=" + state
+                    "url": "quizlet.com/authorize?response_type=code&client_id=4Hxdpv7gBE&scope=read%20write_set&state=" + state
                 }]
                 }
                 context.sendResponse(JSON.stringify(button));
@@ -22,6 +22,30 @@
                 context.sendResponse("hi");
             } else if (event.message.toLowerCase()=="state") {
                 context.sendResponse(context.simpledb.roomleveldata.state)
+            } else if (event.message.toLowerCase()=="listme") {
+                var lists = ["French","Spanish","Portugese"]
+                var arrayLength = lists.length;
+                var list ={
+                    "type": "list",
+                    "topElementStyle": "compact",
+                    "msgid": "list123",
+                    "items": [],
+                };
+                for (var i = 0; i < arrayLength; i++) {
+                    var item = {
+                        "title": lists[i],
+                        "subtitle":"language",
+                        "options": [ {
+                            "type": "text",
+                            "title": "learn"
+                        }
+                        ]
+                    }
+                    list['items'].push(item);
+                }
+
+    context.sendResponse(JSON.stringify(list));
+    return;
             }
 
        }
