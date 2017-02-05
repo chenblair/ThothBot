@@ -1,63 +1,62 @@
-  <?php
+<?php
 
-  // Your credentials
-  $myClientId = '4Hxdpv7gBE';
-  $mySecret = 'zp6Hqq22RnMyKP7q89BQm4';
-  $myUrl = 'https://mature-upside.000webhostapp.com/test.php';
+// Your credentials
+$myClientId = '4Hxdpv7gBE';
+$mySecret = 'zp6Hqq22RnMyKP7q89BQm4';
+$myUrl = 'http://thothbot.000webhostapp.com/auth.php';
 
 $authorizeUrl = "https://quizlet.com/authorize?client_id={$myClientId}&response_type=code&scope=read%20write_set";
+$tokenUrl = 'https://api.quizlet.com/oauth/token';
 
-  session_start();
+session_start();
 
-  // Helper function for errors
-  function displayError($step) {
-  	echo '<h2>An error occurred in step '.$step.'</h2>';
-  }
+// Helper function for errors
+function displayError($step) {
+	echo '<h2>An error occurred in step '.$step.'</h2>';
+}
 
-  // Step 1: Authorize
-  if (empty($_GET['code']) && empty($_GET['error'])) { // only if something somehow went wrong
-  	$_SESSION['state'] = md5(mt_rand().microtime(true)); // CSRF protection
-  	echo '<a href="'.$authorizeUrl.'&state='.urlencode($_SESSION['state']).'&redirect_uri='.urlencode($myUrl).'">Step 1: Start Authorization</a>';
+// Step 1: Auth Token
+	echo "<p>Step 1 completed - the user authorized our application.</p>";
+  $payload = [
+    'code' => $_GET['code'],
+    'redirect_uri' => $myUrl,
+  	'grant_type' => 'authorization_code',
+	];
+	$curl = curl_init($tokenUrl);
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($curl, CURLOPT_USERPWD, "{$myClientId}:{$mySecret}");
+  curl_setopt($curl, CURLOPT_POST, true);
+  curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
+  $token = json_decode(curl_exec($curl), true);
+  $responseCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+  curl_close($curl);
+
+  if ($responseCode !== 200) { // An error occurred getting the token
+	  displayError($token, 2);
   	exit();
-  }
+	}
 
-  if (!empty($_GET['error'])) { // An error occurred authorizing
-  	displayError($_GET, 1);
-  	exit();
-  }
+  $accessToken = $token['access_token'];
+  $username = $token['username'];
 
-  /*if ($_GET['state'] !== $_SESSION['state']) {
-  	exit("We did not receive the expected state. Possible CSRF attack.");
-  }*/
+  // Store the token for later use (outside of this example, you might use a real database)
+  // You must treat the "access token" like a password and store it securely
+  $_SESSION['access_token'] = $accessToken;
+  $_SESSION['username'] = $username;
 
-  // Step 2: Auth Token
-  if (!isset($_SESSION['access_token'])) {
-  	echo "<p>Application authorized</p>";
+  echo "<p>Step 2 completed - access token was received.</p>";
 
-    $vars = [
-      'state' => $_GET['state'],
-      'code' => $_GET['code'],
-    ];
-    /*$curl = curl_init("https://www.gupshup.io/developer/bot/ThothBotTest/public");
-    curl_setopt($curl, CURLOPT_POSTFIELDS, $vars);
-    $responseCode = curl_exec($curl);
-    curl_close($curl);
 
-    if ($responseCode !== 200) { // An error occurred getting the token
-      displayError(2);
-      exit();
-    }*/
+  // Step 3: Send to Gupshup
+  $ch = curl_init();
+  $url = "https://www.gupshup.io/developer/bot/ThothBotTest/public?state=" . $_GET['state'] . "&code=" . $accessToken;
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_HTTPGET, true);
+  $data = curl_exec($ch);
+  curl_close($ch);
 
-    $ch = curl_init();
-    $url = "https://www.gupshup.io/developer/bot/ThothBotTest/public?state=" . $_GET['state'] . "&code=" . $_GET['code'];
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPGET, true);
-    $data = curl_exec($ch);
-    curl_close($ch);
+  echo "<p>Step 3 completed - sent to Gupshup.</p>";
+  //echo "<p>STATE: ", $_GET['state'], " CODE: ", $_GET['code'], "</p>";
+  echo "<script>window.close();</script>";
 
-  	echo "<p>Step 2 completed - access token was received.</p>";
-    //echo "<p>STATE: ", $_GET['state'], " CODE: ", $_GET['code'], "</p>";
-    echo "<script>window.close();</script>";
-
-  }
 ?>
