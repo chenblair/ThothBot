@@ -9,7 +9,7 @@ function MessageHandler(context, event) {
             "options": [{
               "type": "url",
               "title": "Authorize",
-              "url": "quizlet.com/authorize?response_type=code&client_id=4Hxdpv7gBE&scope=write_set&state=" + state
+              "url": "quizlet.com/authorize?response_type=code&client_id=4Hxdpv7gBE&scope=read%20write_set&state=" + state
             }]
         }
         context.sendResponse(JSON.stringify(button));
