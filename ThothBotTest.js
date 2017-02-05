@@ -2,16 +2,15 @@ var message = "";
 var username;
 var authCode;
 
-function MessageHandler(context, event) {
-  if (isNewUser(context)) {
-    var state = new Date().getTime().toString();
+function EventHandler(context, event) {
+  var state = new Date().getTime().toString();
     context.simpledb.roomleveldata.currentLearn = -1;
     context.simpledb.roomleveldata.state = state;
     context.simpledb.doPut(state, "{\"contextid\":\"" + event.contextobj.contextid +
       "\"}");
     var button = {
       "type": "survey",
-      "question": "To begin, you need to link your Quizlet account to ThothBot. Please press authorize!",
+      "question": "To begin, you need to link your Quizlet account to ThothBot. Please authorize!",
       "msgid": "authorizebutton",
       "options": [{
         "type": "url",
@@ -21,7 +20,9 @@ function MessageHandler(context, event) {
       }]
     }
     context.sendResponse(JSON.stringify(button));
-  }
+}
+
+function MessageHandler(context, event) {
   if (event.message == "Main Menu") {
     var survey = {
       "type": "survey",
