@@ -1,10 +1,11 @@
-var message = null;
+var message = "";
 var username;
 var authCode;
 
 function MessageHandler(context, event) {
   if (isNewUser(context)) {
     var state = new Date().getTime().toString();
+    context.simpledb.roomleveldata.currentLearn = -1;
     context.simpledb.roomleveldata.state = state;
     context.simpledb.doPut(state, "{\"contextid\":\"" + event.contextobj.contextid +
       "\"}");
@@ -20,27 +21,54 @@ function MessageHandler(context, event) {
       }]
     }
     context.sendResponse(JSON.stringify(button));
+  }
+  if (isNewUser(context) || event.message ==
+    "Main Menu" || (event.message == "Main Menu" && event.messageobj
+      .refmsgid == "failure")) {
+
+    context.simpledb.roomleveldata.isnewuser = true;
+
+    var survey = {
+      "type": "survey",
+      "question": "Want to study?",
+      "msgid": "mainmenu",
+      "options": ["Learn", "Quick Quiz"]
+    }
+    context.sendResponse(JSON.stringify(survey));
+    return;
   } else if (event.message.toLowerCase() == "kill") {
     context.simpledb.roomleveldata.isnewuser = false;
     context.sendResponse("hi");
+  } else if (context.simpledb.roomleveldata.currentLearn > -1) {
+    if (event.message.toLowerCase() != context.simpledb.roomleveldata.correctAnswer) {
+      message = "Sorry, answer was: " + context.simpledb.roomleveldata
+        .correctAnswer + "\n";
+    } else {
+      message = "Correct!\n";
+    }
+    learnMode(context, event);
+    return;
   } else if (event.message.toLowerCase() == "state") {
     context.sendResponse(context.simpledb.roomleveldata.state)
   } else if (event.message.toLowerCase() == "listme") {
-    var titles = context.simpledb.roomleveldata.json.title;
-    var arrayLength = titles.length;
+    //var titles = context.simpledb.roomleveldata.jsonlist.title
+    //var arrayLength = title.length;
+    context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
     var list = {
       "type": "list",
       "topElementStyle": "compact",
       "msgid": "listselect",
       "items": [],
     };
-    for (var i = 0; i < arrayLength; i++) {
+    for (var i = 0; i < context.simpledb.roomleveldata.jsonlist.length; i++) {
       var item = {
-        "title": titles[i],
-        "subtitle": context.simpledb.roomleveldata.json.title[i].term_count,
+        "title": context.simpledb.roomleveldata.jsonlist[i].title.toString(),
+        "subtitle": context.simpledb.roomleveldata.jsonlist[i].term_count.toString() +
+          " terms",
         "options": [{
           "type": "text",
-          "title": "learn"
+          "title": "Learn " + context.simpledb.roomleveldata.jsonlist[i].title
+            .toString()
         }]
       }
       list['items'].push(item);
@@ -48,12 +76,52 @@ function MessageHandler(context, event) {
 
     context.sendResponse(JSON.stringify(list));
     return;
-  } else if (event.message.toLowerCase() == "dump") {
-    //context.sendResponse(context.simpledb.roomleveldata.state.toString())
-    context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
-    //context.sendResponse(authCode + username);
   }
+  /*else if (event.message.toLowerCase() == "dump") {
+     context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
+     //context.sendResponse(context.simpledb.roomleveldata.state.toString())
+     //context.sendResponse(authCode + username);
+   }*/
 
+  if (event.message.toLowerCase().substring(0, 5) == "learn") {
+    for (var i = 0; i < context.simpledb.roomleveldata.jsonlist.length; i++) {
+      if (event.message.includes(context.simpledb.roomleveldata
+          .jsonlist[i].title.toString())) {
+        //context.sendResponse("learn");
+        context.simpledb.roomleveldata.currentLearn = i;
+        initLearnMode(context, event);
+        learnMode(context, event);
+      }
+    }
+  }
+}
+
+function initLearnMode(context, event) {
+  var ind = context.simpledb.roomleveldata.currentLearn;
+  var list = context.simpledb.roomleveldata.jsonlist[ind];
+  context.simpledb.roomleveldata.termsCorrect = [];
+  for (i = 0; i < list.term_count; i++) {
+    context.simpledb.roomleveldata.termsCorrect[i] = false;
+  }
+}
+
+function learnMode(context, event) {
+  for (var i = 0; i < context.simpledb.roomleveldata.termsCorrect.length; i++) {
+    if (!context.simpledb.roomleveldata.termsCorrect[i]) {
+      context.simpledb.roomleveldata.termsCorrect[i] = true;
+      context.simpledb.roomleveldata.correctAnswer = context.simpledb.roomleveldata
+        .jsonlist[context.simpledb
+          .roomleveldata.currentLearn].terms[i].term.toLowerCase();
+      context.sendResponse(message + context.simpledb.roomleveldata.jsonlist[
+        context.simpledb
+        .roomleveldata.currentLearn].terms[i].definition);
+      return;
+    }
+    // set completed
+    context.simpledb.roomleveldata.currentLearn = -1;
+    context.sendResponse("Set complete!");
+    return;
+  }
 }
 
 function HttpEndpointHandler(context, event) {
@@ -86,7 +154,7 @@ function DbPutHandler(context, event) {
 function HttpResponseHandler(context, event) {
   var json = JSON.parse(event.getresp);
   context.simpledb.roomleveldata.jsonlist = json;
-  context.sendResponse(event.getresp);
+  //context.sendResponse(event.getresp);
 }
 
 function isNewUser(context) {
