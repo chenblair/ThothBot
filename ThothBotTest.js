@@ -22,9 +22,7 @@ function MessageHandler(context, event) {
     }
     context.sendResponse(JSON.stringify(button));
   }
-  if (isNewUser(context) || event.message ==
-    "Main Menu" || (event.message == "Main Menu" && event.messageobj
-      .refmsgid == "failure")) {
+  if (isNewUser(context) || event.message == "Main Menu") {
 
     context.simpledb.roomleveldata.isnewuser = true;
 
@@ -32,7 +30,7 @@ function MessageHandler(context, event) {
       "type": "survey",
       "question": "Want to study?",
       "msgid": "mainmenu",
-      "options": ["Learn", "Quick Quiz"]
+      "options": ["Learn", "Flash Quiz"]
     }
     context.sendResponse(JSON.stringify(survey));
     return;
@@ -41,16 +39,16 @@ function MessageHandler(context, event) {
     context.sendResponse("hi");
   } else if (context.simpledb.roomleveldata.currentLearn > -1) {
     if (event.message.toLowerCase() != context.simpledb.roomleveldata.correctAnswer) {
-      message = "Sorry, answer was: " + context.simpledb.roomleveldata
+      message = "\u2717\nAnswer was: " + context.simpledb.roomleveldata
         .correctAnswer + "\n";
     } else {
-      message = "Correct!\n";
+      message = "\u2713\n";
     }
     learnMode(context, event);
     return;
   } else if (event.message.toLowerCase() == "state") {
     context.sendResponse(context.simpledb.roomleveldata.state)
-  } else if (event.message.toLowerCase() == "listme") {
+  } else if (event.message.toLowerCase() == "learn") {
     //var titles = context.simpledb.roomleveldata.jsonlist.title
     //var arrayLength = title.length;
     context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
@@ -76,6 +74,24 @@ function MessageHandler(context, event) {
 
     context.sendResponse(JSON.stringify(list));
     return;
+  } else if (event.message.toLowerCase().substring(0, 5) == "learn") {
+    for (var i = 0; i < context.simpledb.roomleveldata.jsonlist.length; i++) {
+      if (event.message.includes(context.simpledb.roomleveldata
+          .jsonlist[i].title.toString().substring(0, 15))) {
+        //context.sendResponse("learn");
+        context.simpledb.roomleveldata.currentLearn = i;
+        initLearnMode(context, event);
+        learnMode(context, event);
+      }
+    }
+  } else { // otherwise go to main menu
+    var button = {
+      "type": "survey",
+      "question": "Not a valid command.",
+      "msgid": "failure",
+      "options": ["Main Menu"]
+    }
+    context.sendResponse(JSON.stringify(button));
   }
   /*else if (event.message.toLowerCase() == "dump") {
      context.simpledb.doGet(context.simpledb.roomleveldata.state.toString());
@@ -83,17 +99,11 @@ function MessageHandler(context, event) {
      //context.sendResponse(authCode + username);
    }*/
 
-  if (event.message.toLowerCase().substring(0, 5) == "learn") {
-    for (var i = 0; i < context.simpledb.roomleveldata.jsonlist.length; i++) {
-      if (event.message.includes(context.simpledb.roomleveldata
-          .jsonlist[i].title.toString())) {
-        //context.sendResponse("learn");
-        context.simpledb.roomleveldata.currentLearn = i;
-        initLearnMode(context, event);
-        learnMode(context, event);
-      }
-    }
-  }
+
+}
+
+function updateReport(context, event) {
+
 }
 
 function initLearnMode(context, event) {
@@ -117,11 +127,11 @@ function learnMode(context, event) {
         .roomleveldata.currentLearn].terms[i].definition);
       return;
     }
-    // set completed
-    context.simpledb.roomleveldata.currentLearn = -1;
-    context.sendResponse("Set complete!");
-    return;
   }
+  // set completed
+  context.simpledb.roomleveldata.currentLearn = -1;
+  context.sendResponse("Set complete!");
+  return;
 }
 
 function HttpEndpointHandler(context, event) {
