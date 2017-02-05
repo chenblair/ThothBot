@@ -4,7 +4,7 @@
             if(event.message=='hi') {
                 context.simpledb.doPut(event.sender,event.contextobj);
              }
-             context.sendResponse(event.contextobj);
+             context.sendResponse(event.sender);
        }
         function HttpEndpointHandler(context,event){
             var dbkey= event.params.key
@@ -14,7 +14,7 @@
         }
 
         function DbGetHandler(context, event) {
-            var url = "https://api.gupshup.io/sm/api/bot/botname/msg";  //The bot which is sending the message to the user.
+            var url = "https://api.gupshup.io/sm/api/bot/ThothBotTest/msg";  //The bot which is sending the message to the user.
             var header = {"apikey":"3da26936384d4476c40c6eac52573b96","Content-Type": "application/x-www-form-urlencoded"};  // you can get the API key from https://www.gupshup.io/developer/docs/bot-api/bot-api-ref
             var contextobj = event.dbval;
             var param = "context="+contextobj+"&message="+message;
