@@ -24,7 +24,26 @@ function EventHandler(context, event) {
 }
 
 function MessageHandler(context, event) {
-  if (event.message == "Main Menu") {
+ if (event.message.toLowerCase() == "get started") {
+     context.simpledb.botleveldata.states = [];
+  var state = new Date().getTime().toString();
+    context.simpledb.roomleveldata.currentLearn = -1;
+    context.simpledb.roomleveldata.state = state;
+    //context.simpledb.doPut(state, "{\"contextid\":\"" + event.contextobj.contextid +
+    //  "\"}");
+    var button = {
+      "type": "survey",
+      "question": "To begin, you need to link your Quizlet account to ThothBot. Please authorize!",
+      "msgid": "authorizebutton",
+      "options": [{
+        "type": "url",
+        "title": "Authorize",
+        "url": "quizlet.com/authorize?response_type=code&client_id=4Hxdpv7gBE&scope=read%20write_set&state=" +
+          state
+      }]
+    }
+    context.sendResponse(JSON.stringify(button));
+  } else if (event.message == "Main Menu") {
     var survey = {
       "type": "survey",
       "question": "Want to study?",
